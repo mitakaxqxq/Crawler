@@ -9,3 +9,10 @@ class Website(Base):
     website_id = Column(Integer, primary_key=True)
     name = Column(String)
     server = Column(String)
+    parent_id = Column(Integer)
+
+
+class Visits(Base):
+    __tablename__ = 'visits'
+    visited_id = Column(Integer, primary_key=True)
+    current_id = Column(Integer)
