@@ -3,6 +3,7 @@ import sqlalchemy
 from sqlalchemy import desc
 import requests
 from bs4 import BeautifulSoup
+import datetime
 import sys
 sys.path.append('..')
 from db import Base, Session
@@ -34,6 +35,7 @@ class WebsiteGateway:
         return counter
 
     def crawl_current_website(self, current_website_id):
+        self.session = Session()
         current_id = self.session.query(Visits).filter(Visits.visited_id == current_website_id).first()
         current_link = self.session.query(Website).filter(Website.website_id == current_id.visited_id).first()
         currently_visiting_id = current_id.visited_id
@@ -47,6 +49,7 @@ class WebsiteGateway:
         if current_id.current_id == self.get_count_of_websites(current_website_parent_link.name):
             print('You have already visited all links on this website!')
             try:
+                self.session = Session()
                 self.session.add(Visits(visited_id=current_website_id + 1, current_id=0))
                 self.session.commit()
                 self.session.close()
@@ -54,12 +57,14 @@ class WebsiteGateway:
                 print('Already in database')
                 self.session.rollback()
         else:
+            self.session = Session()
             self.add_new_websites(current_website_parent_link.name)
             self.session.query(Visits).filter(Visits.visited_id == current_website_id).update(
                 {Visits.current_id: self.get_count_of_websites(current_website_parent_link.name)})
             self.session.commit()
             self.session.close()
             try:
+                self.session = Session()
                 self.session.add(Visits(visited_id=current_website_id + 1, current_id=0))
                 self.session.commit()
                 self.session.close()
@@ -68,6 +73,7 @@ class WebsiteGateway:
                 self.session.rollback()
 
     def add_starting_websites(self, starting_url):
+        self.session = Session()
         reader = requests.get(starting_url)
         server = reader.headers["Server"]
 
@@ -81,7 +87,8 @@ class WebsiteGateway:
             if ".bg" in element and (element.startswith("http") or element.startswith("https")):
                 print(element)
                 try:
-                    website = Website(name=element, server=server)
+                    website = Website(name=element, server=server, created_at=datetime.datetime.now())
+                    self.session = Session()
                     self.session.add(website)
                     self.session.commit()
                     self.session.close()
@@ -91,7 +98,8 @@ class WebsiteGateway:
             if "link.php" in element and (element.startswith("http") or element.startswith("https")):
                 try:
                     new_url = "https://register.start.bg" + element
-                    website = Website(name=new_url, server=server)
+                    website = Website(name=new_url, server=server, created_at=datetime.datetime.now())
+                    self.session = Session()
                     self.session.add(website)
                     self.session.commit()
                     self.session.close()
@@ -102,6 +110,7 @@ class WebsiteGateway:
         print('Done.')
 
     def add_new_websites(self, website_name):
+        self.session = Session()
         print(website_name)
         queue = []
         reader = requests.get(website_name)
@@ -116,7 +125,8 @@ class WebsiteGateway:
             if ".bg" in element and (element.startswith("http") or element.startswith("https")):
                 print(element)
                 try:
-                    website = Website(name=element, server=server)
+                    website = Website(name=element, server=server, created_at=datetime.datetime.now())
+                    self.session = Session()
                     self.session.add(website)
                     self.session.commit()
                     self.session.close()
@@ -127,7 +137,8 @@ class WebsiteGateway:
             if "link.php" in element and (element.startswith("http") or element.startswith("https")):
                 try:
                     new_url = website_name + element
-                    website = Website(name=new_url, server=server)
+                    website = Website(name=new_url, server=server, created_at=datetime.datetime.now())
+                    self.session = Session()
                     self.session.add(website)
                     self.session.commit()
                     self.session.close()

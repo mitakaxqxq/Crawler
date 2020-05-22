@@ -9,6 +9,7 @@ class Website(Base):
     website_id = Column(Integer, primary_key=True)
     name = Column(String)
     server = Column(String)
+    created_at = Column(String)
 
 
 class Visits(Base):
