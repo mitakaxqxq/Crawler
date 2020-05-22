@@ -5,17 +5,21 @@ from db import session
 from bootstrap import bootstrap
 from models.models import Website, Visits
 import sqlalchemy
+from sqlalchemy import desc
+
+
+def get_last_uncrawled_website_id():
+    last_website_id = session.query(Visits).order_by(desc(Visits.visited_id)).first()
+    return last_website_id.visited_id
 
 
 def crawl_current_website(current_website_id):
     current_id = session.query(Visits).filter(Visits.visited_id == current_website_id).first()
     current_link = session.query(Website).filter(Website.website_id == current_id.visited_id).first()
-    print(current_id.visited_id, current_id.current_id)
-    print(current_link.website_id, current_link.name, current_link.server, current_link.parent_id)
     currently_visiting_id = current_id.visited_id
     reader = requests.get(str(current_link.name))
     try:
-        html_doc = reader.content
+        reader.content
     except Exception:
         pass
     current_website_parent_link = session.query(Website.name).filter(
@@ -23,20 +27,23 @@ def crawl_current_website(current_website_id):
     if current_id.current_id == get_count_of_websites(current_website_parent_link.name):
         print('You have already visited all links on this website!')
         try:
-            session.add(Visits(visited_id=current_website_id+1, current_id=0))
+            session.add(Visits(visited_id=current_website_id + 1, current_id=0))
             session.commit()
-        except Exception: 
+            session.close()
+        except Exception:
             print('Already in database')
             session.rollback()
     else:
-        list_of_added_sites = add_new_websites(current_website_parent_link.name, current_website_id)
+        add_new_websites(current_website_parent_link.name)
         session.query(Visits).filter(Visits.visited_id == current_website_id).update(
-        {Visits.current_id: currently_visiting_id + get_count_of_websites(current_website_parent_link.name)})
+            {Visits.current_id: get_count_of_websites(current_website_parent_link.name)})
         session.commit()
+        session.close()
         try:
-            session.add(Visits(visited_id=current_website_id+1, current_id=0))
+            session.add(Visits(visited_id=current_website_id + 1, current_id=0))
             session.commit()
-        except Exception: 
+            session.close()
+        except Exception:
             print('Already in database')
             session.rollback()
 
@@ -56,7 +63,7 @@ def add_starting_websites(starting_url, queue):
         if ".bg" in element and (element.startswith("http") or element.startswith("https")):
             print(element)
             try:
-                website = Website(name=element, server=server, parent_id=0)
+                website = Website(name=element, server=server)
                 session.add(website)
                 session.commit()
                 queue.append(element)
@@ -66,7 +73,7 @@ def add_starting_websites(starting_url, queue):
         if "link.php" in element and (element.startswith("http") or element.startswith("https")):
             try:
                 new_url = "https://register.start.bg" + element
-                website = Website(name=new_url, server=server, parent_id=0)
+                website = Website(name=new_url, server=server)
                 session.add(website)
                 session.commit()
                 queue.append(element)
@@ -81,7 +88,6 @@ def add_starting_websites(starting_url, queue):
 def get_count_of_websites(website_name):
     counter = 0
     reader = requests.get(website_name)
-    server = reader.headers["Server"]
     html_doc = reader.content
     soup = BeautifulSoup(html_doc, "html.parser")
     list_of_tags = soup.find_all("a")
@@ -95,7 +101,8 @@ def get_count_of_websites(website_name):
             counter += 1
     return counter
 
-def add_new_websites(website_name, website_parent_id):
+
+def add_new_websites(website_name):
     print(website_name)
     queue = []
     reader = requests.get(website_name)
@@ -110,7 +117,7 @@ def add_new_websites(website_name, website_parent_id):
         if ".bg" in element and (element.startswith("http") or element.startswith("https")):
             print(element)
             try:
-                website = Website(name=element, server=server, parent_id=website_parent_id)
+                website = Website(name=element, server=server)
                 session.add(website)
                 session.commit()
                 queue.append(element)
@@ -120,7 +127,7 @@ def add_new_websites(website_name, website_parent_id):
         if "link.php" in element and (element.startswith("http") or element.startswith("https")):
             try:
                 new_url = website_name + element
-                website = Website(name=new_url, server=server, parent_id=website_parent_id)
+                website = Website(name=new_url, server=server)
                 session.add(website)
                 session.commit()
                 queue.append(new_url)
@@ -137,7 +144,7 @@ def main():
         add_starting_websites("https://register.start.bg", [])
     elif command == 'start':
         try:
-            index = 1
+            index = get_last_uncrawled_website_id()
             while True:
                 crawl_current_website(index)
                 index += 1
