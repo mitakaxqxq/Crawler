@@ -5,3 +5,4 @@ from sqlalchemy.orm import sessionmaker
 Base = declarative_base()
 engine = create_engine("sqlite:///websites.db")
 Session = sessionmaker(bind=engine)
+session = Session()
