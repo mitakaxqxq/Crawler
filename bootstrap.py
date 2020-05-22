@@ -1,10 +1,11 @@
-from db import Base, engine, session
+from db import Base, engine, Session
 from models.models import Visits
 import sqlalchemy
 
 
 def bootstrap():
     Base.metadata.create_all(engine)
+    session = Session()
     try:
         session.add(Visits(visited_id=1, current_id=0))
         session.commit()
