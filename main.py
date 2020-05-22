@@ -1,6 +1,7 @@
 import sys
 from bootstrap import bootstrap
 from models.controller import WebsiteController
+from utils import draw_chart_by_dictionary
 
 
 class Application:
@@ -22,6 +23,14 @@ class Application:
         except KeyboardInterrupt:
             pass
 
+    @classmethod
+    def show(self):
+        choice = input('Do you want to see chart? (y/n)')
+        if choice == 'y':
+            draw_chart_by_dictionary()
+        else:
+            print('Goodbye!')
+
 
 def main():
     command = sys.argv[1]
@@ -29,6 +38,8 @@ def main():
         Application.build()
     elif command == 'start':
         Application.start()
+    elif command == 'show':
+        Application.show()
     else:
         raise ValueError(f'Unkown command {command}. Valid ones are "build" and "start"!')
 
