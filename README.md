@@ -41,4 +41,4 @@ In the table __Visits__ the __visited_id__ column shows the current website we a
 
 Our program uses BFS logic when traversing through the URLs that are in a given webpage. We start from our current webpage, find all URLs that are found in it, and then continue with the same steps with the first URL of our found.
 
-Thanks to the __Visits__ table we know if we have visited all the links in a given webpage. If not, our program will continue from the last URL it was at.
+Thanks to the __Visits__ table we know if we have visited all the links in a given webpage. If not, our program will continue from the last URL it was at. Example for a stopped crawler program is using the __Ctrl+C__ key combination and then starting the program again.
