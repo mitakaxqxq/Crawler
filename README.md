@@ -20,6 +20,7 @@ After you have installed the packages, follow these steps:
 - This command will create the __websites.db__ in the folder of the project.
 4. Run ```python main.py start```
 - This command will start the crawler, starting from https://register.start.bg/
+5. If you want to see histogram of the crawled websites as a bar chart, run ```python main.py show``` This command will not only show you the collected data for the websites but also store the bar chart as an image in the folder of the project.
 
 # Program explanation
 
